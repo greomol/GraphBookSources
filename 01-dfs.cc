@@ -14,10 +14,10 @@ int main() {
     }
     //g.print();
     clock_t st = clock();
-    auto d = g.bfs_array(0);
+    auto d = g.dfs_array(0);
     clock_t en = clock();
     for (auto q: d) {
-        cout << q << ' ';
+        cout << q.first << '/' << q.second << ' ';
     }
     cout << '\n';
     cout << (en - st) * 1.0 / CLOCKS_PER_SEC << endl;
