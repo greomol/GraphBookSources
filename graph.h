@@ -187,56 +187,119 @@ public:
     return d;
   }
              
-  void dfs_visit_array(int u, 
-   vector<color_t> &c, vector<pair<int,int>> &d, int &time) const {
-    c[u] = GREY;
-    d[u].first = ++time; 
-    for (auto v: adj[u]) {
-      if (c[v] == WHITE) dfs_visit_array(v,c,d,time);
-    }
-    d[u].second = ++time;
+void dfs_visit_array(int u, vector<color_t> &c, vector<pair<int,int>> &d, int &time) const {
+  c[u] = GREY;
+  d[u].first = ++time; 
+  for (auto v: adj[u]) {
+    if (c[v] == WHITE) dfs_visit_array(v,c,d,time);
   }
+  d[u].second = ++time;
+}
 
+// Perform DFS search.
+// Input: s - start node
+vector<pair<int,int>> dfs_array(int s) const { 
+  assert (s >= 0 && s < N);
+  assert (repr == ARRAY);
+  vector<color_t> c(N, WHITE);
+  vector<pair<int,int>>   d(N, {-1,-1});
+  int time = 0;
+  dfs_visit_array(s,c,d,time);
+  return d;
+}  
+ 
+
+void print(stack<int> q) const {
+  while (!q.empty()) {
+    auto u = q.top(); q.pop();
+    printf("%d ", u & ~0x8000000);
+  }  
+  printf("\n");
+}
   // Perform DFS search.
   // Input: s - start node
-  vector<pair<int,int>> dfs_array(int s) const { 
-    assert (s >= 0 && s < N);
+  vector<pair<int,int>> dfs_array_norecursive() const { 
     assert (repr == ARRAY);
-    vector<color_t> c(N, WHITE);
+    //print();
+    vector<color_t> color(N, WHITE);
+    const int MARK = 0x8000000;
     vector<pair<int,int>>   d(N, {-1,-1});
     int time = 0;
-    dfs_visit_array(s,c,d,time);
+    stack<int> que;
+    for (int s = 0; s < N; s++) {
+      if (color[s] != WHITE) continue;
+      que.push(s | MARK);
+      color[s] = GREY;
+      while (!que.empty()) {
+        //print(que);
+        //printf("color: "); for (auto q: color) printf("%d ", q); printf("\n");
+        auto u = que.top(); que.pop();
+        //printf("u={%d,%d}\n", u.first, u.second);
+        if (u & MARK) {
+          u &= ~MARK;
+          d[u].first = ++time;
+          //printf("%d[0] time = %d\n", u.first,time);
+          que.push(u);
+          for (auto v: adj[u]) {
+            //printf("v=[%d,%d]\n", v, color[v]);
+            if (color[v] == WHITE) {
+              color[v] = GREY;
+              que.push(v | MARK);
+            }
+          }
+        } else { 
+          d[u].second = ++time;
+          //printf("%d[1] time = %d\n", u.first, time);
+          color[u] = BLACK;
+        }
+      }
+    } 
     return d;
   }  
- 
-#if 0
-    // Perform DFS search.
-    // Input: s - start node
-    vector<pair<int,int>> dfs_array_stack(int s) const { 
-        assert (s >= 0 && s < N);
-        assert (repr == ARRAY);
-        vector<color> c(N, WHITE);
-        vector<pair<int,int>>   d(N, {-1,-1});
-        int time = 0;
-        queue<int> q;
-        q.push(s);
-        d[s] = 0;
-        c[s] = GREY;
-        while (!q.empty()) {
-            auto u = q.front(); q.pop();
-            for (int z = 0; z < N;  z++) {
-                if (neibs[u][z] == false || c[z] != WHITE) continue;
-                d[z] = d[u] + 1;
-                c[z] = GREY;
-                q.push(z);
-            }
-            c[u] = BLACK;
-        } 
-        return d;
-        return d;
-    }  
+  
+#if 0  
+  // Perform DFS search.
+  // Input: s - start node
+  vector<pair<int,int>> dfs_array_norecursive() const { 
+    assert (repr == ARRAY);
+    //print();
+    vector<color_t> color(N, WHITE);
+    const int MARK = 0x8000000;
+    vector<pair<int,int>>   d(N, {-1,-1});
+    struct stp { int cur; int prev; }
+    int time = 0;
+    stack<stp> st;
+    for (int s = 0; s < N; s++) {
+      if (color[s] != WHITE) continue;
+      st.push({s,-1});
+      color[s] = GREY;
+      while (!que.empty()) {
+again:        
+        printf("color: "); for (auto q: color) printf("%d ", q); printf("\n");
+        auto bu = que.top(); que.pop();
+        printf("bu={%d,%d}\n", bu.cur, bu.prev);
+        int u = bu.cur; int pi = bu.prev;
+        d[u].first = ++time;
+        printf("%d[0] time = %d\n", u,time);
+        for (auto v: adj[u]) {
+          printf("v=[%d,%d]\n", v, color[v]);
+          if (color[v] == WHITE) {
+            color[v] = GREY;
+            que.push({v,u});
+            goto again;
+          }
+        }
+        //} else { 
+        //  d[u].second = ++time;
+        //  //printf("%d[1] time = %d\n", u.first, time);
+        //  color[u] = BLACK;
+        //}
+      }
+    } 
+    return d;
+  }    
 #endif
-          
+            
 private:
     graph_representation repr;
     bool                 unordered;
