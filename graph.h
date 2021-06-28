@@ -20,6 +20,32 @@ using graph_map = unordered_set<int>;
 using graph_map = set<int>;
 #endif
 
+template<typename T>
+class fast_queue {
+private:
+    T* body;
+    T* begin;
+    T* end;
+    T* body_end;
+public:
+    fast_queue(size_t size) {
+        body = new T[size];
+        begin = end = body;
+        body_end = body + size;
+    }
+    ~fast_queue() {
+        delete [] body;
+    }
+    void enqueue(T const &el) {
+        *end++ = el;
+    }
+    bool empty() const {
+        return begin == end;
+    }
+    T dequeue() {
+        return *begin++;
+    }
+};
 
 
 // unweighted graph
@@ -118,18 +144,18 @@ public:
     assert (repr == ARRAY);
     vector<color_t> color(N, WHITE);
     vector<int>   dist(N, -1);
-    queue<int> que;
-    que.push(start);
+    fast_queue<int> que(N+1);
+    que.enqueue(start);
     dist[start] = 0; 
     color[start] = GREY;
     while (!que.empty()) {
-      auto u = que.front(); que.pop();
+      auto u = que.dequeue(); 
       for (auto v: adj[u]) {
         if (color[v] != WHITE) continue;
         dist[v] = dist[u] + 1; 
         // If we need a predecessor, pi[u] = v;
         color[v] = GREY;
-        que.push(v);
+        que.enqueue(v);
       }
       color[u] = BLACK;
     } 
@@ -256,50 +282,41 @@ void print(stack<int> q) const {
     } 
     return d;
   }  
-  
-#if 0  
-  // Perform DFS search.
-  // Input: s - start node
-  vector<pair<int,int>> dfs_array_norecursive() const { 
-    assert (repr == ARRAY);
-    //print();
-    vector<color_t> color(N, WHITE);
-    const int MARK = 0x8000000;
-    vector<pair<int,int>>   d(N, {-1,-1});
-    struct stp { int cur; int prev; }
-    int time = 0;
-    stack<stp> st;
-    for (int s = 0; s < N; s++) {
-      if (color[s] != WHITE) continue;
-      st.push({s,-1});
-      color[s] = GREY;
-      while (!que.empty()) {
-again:        
-        printf("color: "); for (auto q: color) printf("%d ", q); printf("\n");
-        auto bu = que.top(); que.pop();
-        printf("bu={%d,%d}\n", bu.cur, bu.prev);
-        int u = bu.cur; int pi = bu.prev;
-        d[u].first = ++time;
-        printf("%d[0] time = %d\n", u,time);
-        for (auto v: adj[u]) {
-          printf("v=[%d,%d]\n", v, color[v]);
-          if (color[v] == WHITE) {
-            color[v] = GREY;
-            que.push({v,u});
-            goto again;
-          }
+
+void junction_point_visit_array(int node, int par, vector<color_t> &color, 
+    vector<int> &d, vector<int> &l, int &time, vector<int> &ans) {
+    color[node] = GREY;
+    time++;
+    d[node] = l[node] = time;
+    int children = 0;
+    for (auto child :adj[node]) {
+        if (child == par) continue; 
+        if (color[child] == WHITE) {
+            junction_point_visit_array(child, node, color, d, l, time, ans);
+            l[node] = min(l[node], l[child]);
+            if (par != -1 && l[child] >= d[node]) ans.push_back(node);
+            children++;
+        } else {
+            l[node] = min(l[node], d[child]);
         }
-        //} else { 
-        //  d[u].second = ++time;
-        //  //printf("%d[1] time = %d\n", u.first, time);
-        //  color[u] = BLACK;
-        //}
-      }
-    } 
-    return d;
-  }    
-#endif
-            
+        if (par == -1 && children > 1) ans.push_back(node);
+    }
+}
+
+vector<int> junction_points_array() {
+    vector<int> d(N, -1);
+    vector<int> l(N, -1);
+    vector<color_t>  color(N, WHITE);
+    int time = 0;
+    vector<int> ans;
+    for (int u = 0; u < N; u++) {
+        if (color[u] == WHITE) {
+            junction_point_visit_array(u, -1, color, d, l, time, ans);
+        }
+    }
+    return ans;
+}  
+
 private:
     graph_representation repr;
     bool                 unordered;

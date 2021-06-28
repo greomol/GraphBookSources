@@ -1,4 +1,4 @@
-all:	bfs dfs
+all:	bfs dfs junction
 	
 runs: $(RUNS)
 	
@@ -9,7 +9,7 @@ RUNS  = $(BFS) $(DFS)
 clean:  
 	rm $(RUNS)
 	
-tests: bfs_tests dfs_tests
+tests: bfs_tests dfs_tests junction_tests
 	
 bfs_tests: $(BFS)
 	echo "BFS-array.01: " | tr -d '\n' ; ./main-bfs-array < tests/01-bfs.01 > /dev/null
@@ -35,7 +35,7 @@ dfs_tests: $(BFS)
 	echo "DFS-array-nonrecursive.03: " | tr -d '\n'  ; ./main-dfs-array-nonrecursive < tests/01-bfs.03 > /dev/null
 
 			
-CXXFLAGS = -std=c++11 -O2
+CXXFLAGS = -std=c++17 -O2
 	
 bfs: main-bfs-array main-bfs-omap main-bfs-umap main-bfs-matrix 
 		
@@ -45,6 +45,8 @@ dfs: main-dfs-array  main-dfs-array-nonrecursive
 	
 DFS = main-dfs-array  main-dfs-array-nonrecursive
 	
+junction: main-junction
+
 main-bfs-array: main-bfs-array.cc graph.h
 	c++ $(CXXFLAGS) -o $@ main-bfs-array.cc
 	
@@ -63,4 +65,6 @@ main-dfs-array: main-dfs-array.cc graph.h
 main-dfs-array-nonrecursive: main-dfs-array-nonrecursive.cc graph.h
 	c++ $(CXXFLAGS) -o $@ main-dfs-array-nonrecursive.cc
 
+main-junction: main-junction.cc graph.h
+	c++ $(CXXFLAGS) -o $@ main-junction.cc
 
