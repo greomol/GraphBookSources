@@ -163,19 +163,41 @@ void main_toposort() {
     print_clock("dfs_toposort", st, en);
 }
 
+void main_Dijkstra() {
+    int n; // Vertices
+    int m; // Edges
+    cin >> n >> m;
+    wgraph<int> g(n, wgraph<int>::ARRAY, true);
+    for (int i = 0; i < m; i++) {
+        int from, to, cost;
+        cin >> from >> to >> cost;
+        g.add_edge(from, to, cost);
+    }
+    g.print();
+    auto st = get_wall_clock();
+    auto d = g.Dijkstra(0);
+    auto en = get_wall_clock();
+    for (auto q: d) {
+        cout << q << ' ';
+    }
+    cout << '\n';
+    print_clock("Dijkstra", st, en);
+}
+
 ////// End of problems /////////////
 
 using problem_func = void (*)();
 
 int main(int argc, char **argv) {
     std::map<std::string, problem_func> problems{
-        {"bfs_array", main_bfs_array},
-        {"bfs_matrix", main_bfs_matrix},
-        {"bfs_map", main_bfs_map},
-        {"dfs_array", main_dfs_array},
-        {"dfs_array_norecursive", main_dfs_array_norecursive},
-        {"junction", main_junction},
-        {"toposort", main_toposort}
+            {"bfs_array", main_bfs_array},
+            {"bfs_matrix", main_bfs_matrix},
+            {"bfs_map", main_bfs_map},
+            {"dfs_array", main_dfs_array},
+            {"dfs_array_norecursive", main_dfs_array_norecursive},
+            {"junction", main_junction},
+            {"toposort", main_toposort},
+            {"dijkstra", main_Dijkstra}
     };
     auto print_problems = [&problems]() {
         for (auto const &p: problems) {
@@ -183,13 +205,13 @@ int main(int argc, char **argv) {
         }
     };
     if (argc == 1) {
-        std::cout << "usage: " << argv[0] << " problem\nWhere problem is one of\n";
+        std::cout << "usage: " << argv[0] << " problem\nWhere problem is one of:\n\n";
         print_problems();
         return 0;
     }
     auto const p = problems.find(argv[1]);
     if (p == problems.end()) {
-        std::cout << "Sorry, given problem " << argv[1] << " is not one of";
+        std::cout << "Sorry, given problem " << argv[1] << " is not one of:\n\n";
         print_problems();
         return 0;
     }

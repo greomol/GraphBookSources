@@ -7,21 +7,8 @@
 
 using namespace std;
 
-#ifndef USING_HASH_TABLES
-#define USING_HASH_TABLES 0
-#endif
-
-#if USING_HASH_TABLES
-#  include <unordered_set>
-#  include <unordered_map>
-using graph_map = unordered_set<int>;
-#else
-
 #  include <set>
 #  include <map>
-
-using graph_map = set<int>;
-#endif
 
 template<typename T>
 class fast_queue {
@@ -57,6 +44,7 @@ public:
 
 // unweighted graph
 class graph {
+    using graph_map = set<int>;
 public:
     enum graph_representation {
         MATRIX, // Matrix N*N
@@ -385,5 +373,158 @@ private:
                 assert(0);
         }
     }
-
 };
+
+
+// weighted graph
+template<typename T = void>
+class wgraph {
+    using wgraph_map = set<pair<int,T>>;
+public:
+    enum graph_representation {
+        MATRIX, // Matrix N*N
+        ARRAY,  // Each node has an array of adjacents
+        GMAP,   // Each node has an map of neibs
+        LIST,   // List of edges
+    };
+    struct link {
+        int from = -1;
+        int to = -1;
+        T cost;
+    };
+    enum color_t {
+        WHITE, GREY, BLACK
+    };
+    enum {
+        INFTY = 1000000000
+    };
+
+    wgraph(size_t nodes, graph_representation grepr, bool is_ordered = false) {
+        N = nodes;
+        repr = grepr;
+        unordered = !is_ordered;
+        switch (repr) {
+            case MATRIX:
+                neibs.resize(N, vector<int>(N, INFTY));
+                break;
+            case ARRAY:
+                adj.resize(N);
+                break;
+            case GMAP:
+                gset.resize(N);
+                break;
+            case LIST:
+            default:
+                assert(0);
+        }
+    }
+
+    void add_edge(int from, int to, int cost) {
+        assert (from >= 0 && from < N);
+        assert (to >= 0 && to < N);
+        switch (repr) {
+            case MATRIX:
+                neibs[from][to] = true;
+                if (unordered) {
+                    neibs[to][from] = true;
+                }
+                break;
+            case ARRAY:
+                adj[from].push_back({to, cost});
+                if (unordered) {
+                    adj[to].push_back({from, cost});
+                }
+                break;
+            case GMAP:
+                gset[from].insert({to, cost});
+                if (unordered) {
+                    gset[to].insert({from, cost});
+                }
+                break;
+            case LIST:
+                assert(0);
+        }
+    }
+
+
+    void print() const {
+        switch (repr) {
+            case ARRAY:
+                for (int u = 0; u < N; u++) {
+                    cout << u << ": ";
+                    for (auto v: adj[u]) {
+                        cout << "(" << v.first << "," << v.second << ") ";
+                    }
+                    cout << "\n";
+                }
+                break;
+            case GMAP:
+                for (int u = 0; u < N; u++) {
+                    cout << u << ": ";
+                    for (auto v: gset[u]) {
+                        cout << "(" << v.first << "," << v.second << ") ";
+                    }
+                    cout << "\n";
+                }
+                break;
+            default:
+                assert(0);
+        }
+    }
+
+    vector<int> Dijkstra(int root) {
+        vector<int> ret(N, INFTY);
+        set<pair<T, size_t>> Q;
+        vector<bool> U(N, false);
+        U[root] = true;
+        ret[root] = 0;
+        Q.insert({0, root});
+        while (!Q.empty()) {
+            auto it = Q.begin();
+            Q.erase(it);
+            int dist = it->first;
+            int u = it->second;
+            for (auto q2: adj[u]) {
+                auto v = q2.first;
+                if (ret[u] + q2.second < ret[v]) {
+                    if (ret[v] < INFTY) {
+                        Q.erase({ret[v], v});
+                    }
+                    ret[v] = ret[u] + q2.second;
+                    Q.insert({ret[v], v});
+                }
+            }
+        }
+        return ret;
+    }
+
+
+private:
+    graph_representation repr;
+    bool unordered;
+
+    vector<vector<T>> neibs;
+    vector<vector<pair<int, T>>> adj; // pairs: (to, cost)
+    vector<wgraph_map> gset;
+    vector<tuple<int, int, T>> edges; // for LIST representation (from, to, cost)
+
+    int N;
+
+    void convert_to_array() {
+        switch (repr) {
+            case GMAP:
+                adj.resize(N, vector<pair<int,int>>());
+                for (size_t u = 0; u < gset.size(); u++) {
+                    for (auto const v: gset[u]) {
+                        adj[u].push_back(v);
+                    }
+                }
+                gset.clear();
+                repr = ARRAY;
+                break;
+            default:
+                assert(0);
+        }
+    }
+};
+
