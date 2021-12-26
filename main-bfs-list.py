@@ -87,9 +87,9 @@ for i in range(M):
     
     
 t1 = time.time()
-#q = t.bfs(0)
+q = t.bfs(0)
 #q = t.dfs()
-q = t.dfs_norecursive()
+#q = t.dfs_norecursive()
 print(q)
 t2 = time.time()
 print(t2-t1)
