@@ -18,7 +18,7 @@ private:
     T *end;
     T *body_end;
 public:
-    fast_queue(size_t size) {
+    explicit fast_queue(size_t size) {
         body = new T[size];
         begin = end = body;
         body_end = body + size;
@@ -51,10 +51,6 @@ public:
         ARRAY,  // Each node has an array of adjacents
         GMAP,   // Each node has an map of neibs
         LIST,   // List of edges
-    };
-    struct link {
-        int from = -1;
-        int to = -1;
     };
     enum color_t {
         WHITE, GREY, BLACK
@@ -201,7 +197,7 @@ public:
             auto u = q.front();
             q.pop();
             for (int z = 0; z < N; z++) {
-                if (neibs[u][z] == false || c[z] != WHITE) continue;
+                if (!neibs[u][z] || c[z] != WHITE) continue;
                 d[z] = d[u] + 1;
                 c[z] = GREY;
                 q.push(z);
@@ -233,7 +229,7 @@ public:
     }
 
 
-    void print(stack<int> q) const {
+    static void print(stack<int> q) {
         while (!q.empty()) {
             auto u = q.top();
             q.pop();
@@ -375,6 +371,41 @@ private:
     }
 };
 
+struct DSU { // Disjoin Set Union.
+    DSU(size_t N) {
+        p.resize(N);
+        for (size_t i = 0; i < N; i++) {
+            p[i] = i;
+        }
+    }
+
+    void print() const {
+        for (size_t i = 0; i < p.size(); i++) {
+            printf("%3zu ", i);
+        }
+        printf("\n");
+        for (auto q: p) {
+            printf("%3zu ", q);
+        }
+        printf("\n\n");
+    }
+
+    size_t find_root(size_t x) {
+        return x == p[x] ? p[x] : p[x] = find_root(p[x]);
+    }
+
+    bool merge(size_t l, size_t r) {
+        l = find_root(l);
+        r = find_root(r);
+        if (l == r) return false;
+        if (lr) p[l] = r;
+        else    p[r] = l;
+        lr = !lr;
+        return true;
+    }
+    vector<size_t> p;
+    bool lr = true;
+};
 
 // weighted graph
 template<typename T = void>
@@ -388,9 +419,9 @@ public:
         LIST,   // List of edges
     };
     struct link {
+        T cost;
         int from = -1;
         int to = -1;
-        T cost;
     };
     enum color_t {
         WHITE, GREY, BLACK
@@ -414,12 +445,13 @@ public:
                 gset.resize(N);
                 break;
             case LIST:
+                break;
             default:
                 assert(0);
         }
     }
 
-    void add_edge(int from, int to, int cost) {
+    void add_edge(int from, int to, T cost) {
         assert (from >= 0 && from < N);
         assert (to >= 0 && to < N);
         switch (repr) {
@@ -442,7 +474,8 @@ public:
                 }
                 break;
             case LIST:
-                assert(0);
+                edges.push_back({cost, from, to});
+                break;
         }
     }
 
@@ -468,11 +501,15 @@ public:
                 }
                 break;
             default:
-                assert(0);
+                for (auto const &q: edges) {
+                    cout << "(" << get<0>(q) << "," << get<1>(q) << "," << get<2>(q) << ") ";
+                }
+                cout << "\n";
         }
     }
 
     vector<int> Dijkstra(int root) {
+        assert(repr == ARRAY);
         vector<int> ret(N, INFTY);
         set<pair<T, size_t>> Q;
         vector<bool> U(N, false);
@@ -498,6 +535,56 @@ public:
         return ret;
     }
 
+    auto Prim(int root){
+        assert(repr == ARRAY);
+        vector<pair<size_t, size_t>> ret;
+        set<int> MST;
+        MST.insert(root);
+        set<tuple<T, int, int>> Q; // Накопитель он содержит все рёбра,
+                                   // исходящие из MST.
+                                   // Те, у которых обе вершины в MST,
+                                   // нас не интересуют.
+        for (auto q: adj[root]) {
+            Q.insert({q.second, root, q.first});
+        }
+        while (!Q.empty()) {
+            // Извлекаем самое лёгкое ребро.
+            auto it = Q.begin(); Q.erase(it);
+            T cost; int from, to;
+            tie(cost, from, to) = *it;
+            if (MST.find(from) == MST.end() ||
+                MST.find(to) != MST.end()) {
+                continue;
+            }
+            //cout << "Q: " << cost << "," << from << "," << to << "\n";
+            ret.push_back({from, to});
+            MST.insert(to);
+            for (auto v: adj[to]) {
+                Q.insert({v.second, to, v.first});
+            }
+        }
+        return ret;
+    }
+
+    auto  Kruscal() {
+        assert(repr == LIST);
+        vector<pair<size_t, size_t>> ret;
+
+        sort(edges.begin(), edges.end());
+        DSU dsu(N);
+        //dsu.print();
+
+        for (auto const &e: edges) {
+            auto l = get<1>(e);
+            auto r = get<2>(e);
+            if (dsu.merge(l,r)) {
+                //dsu.print();
+                ret.push_back({l,r});
+            }
+            if (ret.size() == N-1) break;
+        }
+        return ret;
+    }
 
 private:
     graph_representation repr;

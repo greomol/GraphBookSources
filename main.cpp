@@ -184,6 +184,50 @@ void main_Dijkstra() {
     print_clock("Dijkstra", st, en);
 }
 
+void main_Kruscal() {
+    int n; // Vertices
+    int m; // Edges
+    cin >> n >> m;
+    wgraph<int> g(n, wgraph<int>::LIST, true);
+    for (int i = 0; i < m; i++) {
+        int from, to, cost;
+        cin >> from >> to >> cost;
+        from--; to--;
+        g.add_edge(from, to, cost);
+    }
+    g.print();
+    auto st = get_wall_clock();
+    auto d = g.Kruscal();
+    auto en = get_wall_clock();
+    for (auto q: d) {
+        cout << "(" << q.first << "," << q.second << ") ";
+    }
+    cout << '\n';
+    print_clock("Kruscal", st, en);
+}
+
+void main_Prim() {
+    int n; // Vertices
+    int m; // Edges
+    cin >> n >> m;
+    wgraph<int> g(n, wgraph<int>::ARRAY, false);
+    for (int i = 0; i < m; i++) {
+        int from, to, cost;
+        cin >> from >> to >> cost;
+        from--; to--;
+        g.add_edge(from, to, cost);
+    }
+    g.print();
+    auto st = get_wall_clock();
+    auto d = g.Prim(0);
+    auto en = get_wall_clock();
+    for (auto q: d) {
+        cout << "(" << q.first << "," << q.second << ") ";
+    }
+    cout << '\n';
+    print_clock("Prim", st, en);
+}
+
 ////// End of problems /////////////
 
 using problem_func = void (*)();
@@ -197,7 +241,9 @@ int main(int argc, char **argv) {
             {"dfs_array_norecursive", main_dfs_array_norecursive},
             {"junction", main_junction},
             {"toposort", main_toposort},
-            {"dijkstra", main_Dijkstra}
+            {"dijkstra", main_Dijkstra},
+            {"kruscal", main_Kruscal},
+            {"prim", main_Prim}
     };
     auto print_problems = [&problems]() {
         for (auto const &p: problems) {
