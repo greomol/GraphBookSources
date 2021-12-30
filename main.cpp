@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <ctime>
 #include <map>
 #include <cstdio>
@@ -14,7 +15,7 @@ static void print_clock(std::string const &msg, double start, double end) {
     fprintf(stderr, "%s %.6lf sec\n", msg.c_str(), double(end - start));
 }
 
-void main_bfs_array() {
+void main_bfs_array(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::ARRAY, false);
@@ -34,7 +35,7 @@ void main_bfs_array() {
     print_clock("bfs_array", st, en);
 }
 
-void main_bfs_matrix() {
+void main_bfs_matrix(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::MATRIX, false);
@@ -54,7 +55,7 @@ void main_bfs_matrix() {
     print_clock("bfs_matrix", st, en);
 }
 
-void main_bfs_map() {
+void main_bfs_map(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::GMAP, false);
@@ -75,7 +76,7 @@ void main_bfs_map() {
 }
 
 
-void main_dfs_array() {
+void main_dfs_array(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::ARRAY, false);
@@ -95,7 +96,7 @@ void main_dfs_array() {
     print_clock("dfs_array", st, en);
 }
 
-void main_dfs_array_norecursive() {
+void main_dfs_array_norecursive(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::ARRAY, false);
@@ -115,7 +116,7 @@ void main_dfs_array_norecursive() {
     print_clock("dfs_array_norecursive", st, en);
 }
 
-void main_junction() {
+void main_junction(int arg) {
     int n, e;
     std::cin >> n >> e;
     graph g(n, graph::ARRAY, false);
@@ -135,7 +136,7 @@ void main_junction() {
     print_clock("dfs_array_junction", st, en);
 }
 
-void main_toposort() {
+void main_toposort(int arg) {
     int n, m;
     string tmp;
     getline(cin, tmp); n = stoi(tmp);
@@ -163,7 +164,7 @@ void main_toposort() {
     print_clock("dfs_toposort", st, en);
 }
 
-void main_Dijkstra() {
+void main_Dijkstra(int arg) {
     int n; // Vertices
     int m; // Edges
     cin >> n >> m;
@@ -173,7 +174,7 @@ void main_Dijkstra() {
         cin >> from >> to >> cost;
         g.add_edge(from, to, cost);
     }
-    g.print();
+    //g.print();
     auto st = get_wall_clock();
     auto d = g.Dijkstra(0);
     auto en = get_wall_clock();
@@ -184,7 +185,7 @@ void main_Dijkstra() {
     print_clock("Dijkstra", st, en);
 }
 
-void main_Kruscal() {
+void main_Kruscal(int arg) {
     int n; // Vertices
     int m; // Edges
     cin >> n >> m;
@@ -195,7 +196,7 @@ void main_Kruscal() {
         from--; to--;
         g.add_edge(from, to, cost);
     }
-    g.print();
+    //g.print();
     auto st = get_wall_clock();
     auto d = g.Kruscal();
     auto en = get_wall_clock();
@@ -206,7 +207,7 @@ void main_Kruscal() {
     print_clock("Kruscal", st, en);
 }
 
-void main_Prim() {
+void main_Prim(int arg) {
     int n; // Vertices
     int m; // Edges
     cin >> n >> m;
@@ -217,33 +218,49 @@ void main_Prim() {
         from--; to--;
         g.add_edge(from, to, cost);
     }
-    g.print();
+    //g.print();
+    vector<tuple<size_t, size_t, int>> d;
     auto st = get_wall_clock();
-    auto d = g.Prim(0);
+    switch (arg) {
+        case 0: d = g.Prim_set(0); break;
+        case 1: d = g.Prim_bool(0); break;
+        case 2: d = g.Prim_edges(0); break;
+        case 3: d = g.Prim(0); break;
+    }
     auto en = get_wall_clock();
+    sort(d.begin(), d.end());
+    double tot = 0;
     for (auto q: d) {
-        cout << "(" << q.first << "," << q.second << ") ";
+        cout << "(" << get<0>(q) << "," << get<1>(q) << ") ";
+        tot += get<2>(q);
     }
     cout << '\n';
+    cout << "Total = " << (unsigned long long)tot << "\n";
+
     print_clock("Prim", st, en);
 }
 
 ////// End of problems /////////////
 
-using problem_func = void (*)();
+using problem_func = void (*)(int);
 
 int main(int argc, char **argv) {
-    std::map<std::string, problem_func> problems{
-            {"bfs_array", main_bfs_array},
-            {"bfs_matrix", main_bfs_matrix},
-            {"bfs_map", main_bfs_map},
-            {"dfs_array", main_dfs_array},
-            {"dfs_array_norecursive", main_dfs_array_norecursive},
-            {"junction", main_junction},
-            {"toposort", main_toposort},
-            {"dijkstra", main_Dijkstra},
-            {"kruscal", main_Kruscal},
-            {"prim", main_Prim}
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    std::map<std::string, pair<problem_func,int>> problems{
+            {"bfs_array", {main_bfs_array, 0}},
+            {"bfs_matrix", {main_bfs_matrix, 0}},
+            {"bfs_map", {main_bfs_map, 0}},
+            {"dfs_array", {main_dfs_array, 0}},
+            {"dfs_array_norecursive", {main_dfs_array_norecursive, 0}},
+            {"junction", {main_junction, 0}},
+            {"toposort", {main_toposort, 0}},
+            {"dijkstra", {main_Dijkstra, 0}},
+            {"kruscal", {main_Kruscal, 0}},
+            {"prim", {main_Prim, 3}},
+            {"prim_set", {main_Prim, 0}},
+            {"prim_edges", {main_Prim, 2}},
+            {"prim_bool", {main_Prim, 1}}
     };
     auto print_problems = [&problems]() {
         for (auto const &p: problems) {
@@ -261,6 +278,6 @@ int main(int argc, char **argv) {
         print_problems();
         return 0;
     }
-    p->second();
+    p->second.first(p->second.second);
     return 0;
 }

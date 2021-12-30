@@ -535,15 +535,89 @@ public:
         return ret;
     }
 
+    auto Prim_edges(int root){
+        assert(repr == ARRAY);
+        vector<tuple<size_t, size_t, T>> ret;
+        vector<bool> MST(N,false);
+        MST[root] = true;
+        using tup = tuple<T, int, int>;
+        struct tup_less {
+            bool operator()(tup const &l, tup const &r) {
+                return l > r;
+            }
+        };
+        priority_queue<tup, vector<tup>, tup_less> Q;
+        for (auto q: adj[root]) {
+            Q.push({q.second, root, q.first});
+        }
+        while (!Q.empty()) {
+            // Извлекаем самое лёгкое ребро.
+            auto it = Q.top(); Q.pop();
+            T cost; int from, to;
+            tie(cost, from, to) = it;
+            assert(MST[from]);
+            if (MST[to] ) continue;
+            ret.push_back({from, to, cost});
+            MST[to] = true;
+            for (auto v: adj[to]) {
+                if (!MST[v.first])
+                    Q.push({v.second, to, v.first});
+            }
+        }
+        return ret;
+    }
+
+
     auto Prim(int root){
         assert(repr == ARRAY);
-        vector<pair<size_t, size_t>> ret;
-        set<int> MST;
-        MST.insert(root);
-        set<tuple<T, int, int>> Q; // Накопитель он содержит все рёбра,
-                                   // исходящие из MST.
-                                   // Те, у которых обе вершины в MST,
-                                   // нас не интересуют.
+        vector<tuple<size_t, size_t, T>> ret;
+        vector<bool> MST(N,false);
+        vector<T> dist(N, INFTY);
+        MST[root] = true;
+        using tup = tuple<T, int, int>;
+        struct tup_less {
+            bool operator()(tup const &l, tup const &r) {
+                return l > r;
+            }
+        };
+        priority_queue<tup, vector<tup>, tup_less> Q;
+        // Накопитель содержит все не-MST вершины
+        // с их расстояниями до MST.
+        for (auto q: adj[root]) {
+            Q.push({q.second, root, q.first});
+            dist[q.first] = q.second;
+        }
+        while (!Q.empty()) {
+            // Извлекаем самую близкую вершину.
+            auto it = Q.top(); Q.pop();
+            T cost; int from, to;
+            tie(cost, from, to) = it;
+            assert(MST[from]);
+            if (MST[to] ) continue;
+            // cout << "Q: " << cost << "," << from << "," << to << "\n";
+            ret.push_back({from, to, cost});
+            MST[to] = true;
+            for (auto v: adj[to]) {
+                if (!MST[v.first]) {
+                    if (v.second < dist[v.first]) {
+                        Q.push({v.second, to, v.first});
+                        dist[v.first] = v.second;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    auto Prim_bool(int root){
+        assert(repr == ARRAY);
+        vector<tuple<size_t, size_t, T>> ret;
+        vector<bool> MST(N, false);
+        MST[root] = true;
+        set<tuple<T, int, int>> Q; // Накопитель содержит все рёбра,
+        // исходящие из MST.
+        // Те, у которых обе вершины в MST,
+        // нас не интересуют.
         for (auto q: adj[root]) {
             Q.insert({q.second, root, q.first});
         }
@@ -552,15 +626,43 @@ public:
             auto it = Q.begin(); Q.erase(it);
             T cost; int from, to;
             tie(cost, from, to) = *it;
-            if (MST.find(from) == MST.end() ||
-                MST.find(to) != MST.end()) {
-                continue;
+            assert(MST[from]);
+            if (MST[to] ) continue;
+            ret.push_back({from, to, cost});
+            MST[to] = true;
+            for (auto v: adj[to]) {
+                if (!MST[v.first])
+                    Q.insert({v.second, to, v.first});
             }
-            //cout << "Q: " << cost << "," << from << "," << to << "\n";
-            ret.push_back({from, to});
+        }
+        return ret;
+    }
+
+    auto Prim_set(int root){
+        assert(repr == ARRAY);
+        vector<tuple<size_t, size_t, T>> ret;
+        set<int> MST;
+        MST.insert(root);
+        set<tuple<T, int, int>> Q; // Накопитель содержит все рёбра,
+        // исходящие из MST.
+        // Те, у которых обе вершины в MST,
+        // нас не интересуют.
+        for (auto q: adj[root]) {
+            Q.insert({q.second, root, q.first});
+        }
+        while (!Q.empty()) {
+            if (MST.size() >= N) break;
+            // Извлекаем самое лёгкое ребро.
+            auto it = Q.begin(); Q.erase(it);
+            T cost; int from, to;
+            tie(cost, from, to) = *it;
+            assert(MST.find(from) != MST.end());
+            if (MST.find(to) != MST.end()) continue;
+            ret.push_back({from, to, cost});
             MST.insert(to);
             for (auto v: adj[to]) {
-                Q.insert({v.second, to, v.first});
+                if (MST.find(v.first) == MST.end())
+                    Q.insert({v.second, to, v.first});
             }
         }
         return ret;
